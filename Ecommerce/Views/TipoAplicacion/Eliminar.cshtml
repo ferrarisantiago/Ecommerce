@@ -1,0 +1,34 @@
+﻿@model Ecommerce_Modelos.TipoAplicacion
+
+<form method="post" asp-action="Eliminar">
+    
+    <input asp-for="Id" hidden />
+    <div class="border p-3">
+        <div asp-validation-summary="ModelOnly" class="text-danger">
+        </div>
+
+        <div class="form-group row">
+            <h2 class="text-danger p1-3">Desea Eliminar  la Aplicacion?</h2>
+        </div>
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <label asp-for="Nombre" class="form-label">Nombre</label>
+                    <input asp-for="Nombre" disabled class="form-control" />
+                </div>
+            </div>
+            <br />
+            <div class="d-grid gap-2 d-md-block">
+                <button type="submit" class="btn btn-danger">Eliminar</button>
+                <a asp-controller="TipoAplicacion" asp-action="Index" class="btn btn-success">Volver</a>
+            </div>
+        </div>
+    </div>
+</form>
+
+@section Scripts{
+    @{
+        <partial name="_ValidationScriptsPartial" />
+    }
+    }
+

@@ -1,0 +1,176 @@
+﻿@page
+@model RegisterModel
+@using Ecommerce_Utilidades
+
+<div class="py-4">
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+    <div class="row form-group">
+        <div class="col-8 offset-2">
+            <div class="card">
+                <div class="card-body px-lg-5 pt-4">
+                    <form id="registerForm" asp-route-returnUrl="@Model.ReturnUrl" method="post">
+                        <h3 class="col-12 text-success text-center py-4">
+                            @if (User.IsInRole(WC.AdminRole))
+                            {
+                                <strong>Registrar un Usuario Administrador</strong>
+                            }
+                            else
+                            {
+                                <strong>Registrarse</strong>
+
+                            }
+                        </h3>
+                        <hr />
+                        <div class="py-2">
+                            <input asp-for="Input.NombreCompleto" placeholder="Nombres" class="form-control" autocomplete="nombres" aria-required="true" />
+                            <span asp-validation-for="Input.NombreCompleto" class="text-danger"></span>
+                        </div>
+                        <div class="py-2">
+                            <input asp-for="Input.Email" placeholder="Email" class="form-control" type="email" autocomplete="Email" aria-required="true" />
+                            <span asp-validation-for="Input.Email" class="text-danger"></span>
+                        </div>
+                        <div class="py-2">
+                            <input asp-for="Input.PhoneNumber" placeholder="Teléfono" class="form-control" autocomplete="telefono" aria-required="true" />
+                            <span asp-validation-for="Input.PhoneNumber" class="text-danger"></span>
+                        </div>
+                        <div class="form-row row py-2">
+                            <div class="col-6">
+                                <input asp-for="Input.Password" placeholder="Password" type="password" class="form-control" autocomplete="new-password" aria-required="true" />
+                            </div>
+                            <div class="col-6">
+                                <input asp-for="Input.ConfirmPassword" placeholder="Confirmar Password" type="password" class="form-control" autocomplete="new-password" aria-required="true" />
+                            </div>
+                            <span asp-validation-for="Input.Password" class="text-danger"></span>
+                            <span asp-validation-for="Input.ConfirmPassword" class="text-danger"></span>
+                        </div>
+                        <div class="py-2">
+                            @if (User.IsInRole(WC.AdminRole))
+                            {
+                                <button id="registerSubmit" type="submit" class="w-100 btn btn-lg btn-warning form-control">Registrar Usuario Administrador</button>
+                            }
+                            else
+                            {
+                                <button id="registerSubmit" type="submit" class="w-100 btn btn-lg btn-primary form-control">Registrar</button>
+                            }
+
+                        </div>
+                    </form>
+
+                    <form id="external-account" asp-page="./ExternalLogin" asp-route-returnUrl="@Model.ReturnUrl" method="post" class="form-horizontal">
+                        <p>
+                            Al dar click en <em>Registrar</em> estas de acuerdo con los terminos <a href="" target="_blank">Terminos del servicio</a>
+                        </p>
+                        <div class="row">
+                            <p>
+                                @foreach (var provider in Model.ExternalLogins)
+                                {
+                                    <button type="submit" class="btn btn-primary" name="provider" value="@provider.Name" title="Registrarse usando su cuenta de @provider.DisplayName">@provider.DisplayName</button>
+                                }
+                            </p>
+                        </div>
+                    </form>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
+
+
+
+
+
+@*
+@if (User.IsInRole(Ecommerce_Utilidades.WC.AdminRole))
+{
+    <h1>Nuevo Usuario Administrador</h1>
+}
+else
+{
+    <h1>Registrar Usuario</h1>
+}
+
+
+<div class="row">
+    <div class="col-md-4">
+        <form id="registerForm" asp-route-returnUrl="@Model.ReturnUrl" method="post">
+            <h2>Create a new account.</h2>
+            <hr />
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div class="form-floating">
+                <input asp-for="Input.NombreCompleto" class="form-control" autocomplete="username" aria-required="true" />
+                <label asp-for="Input.NombreCompleto">Nombre completo</label>
+                <span asp-validation-for="Input.NombreCompleto" class="text-danger"></span>
+            </div>
+            <div class="form-floating">
+                <input asp-for="Input.Email" class="form-control" autocomplete="username" aria-required="true" />
+                <label asp-for="Input.Email"></label>
+                <span asp-validation-for="Input.Email" class="text-danger"></span>
+            </div>
+            <div class="form-floating">
+                <input asp-for="Input.PhoneNumber" class="form-control" autocomplete="username" aria-required="true" />
+                <label asp-for="Input.PhoneNumber">Telefono</label>
+                <span asp-validation-for="Input.PhoneNumber" class="text-danger"></span>
+            </div>
+            <div class="form-floating">
+                <input asp-for="Input.Password" class="form-control" autocomplete="new-password" aria-required="true" />
+                <label asp-for="Input.Password"></label>
+                <span asp-validation-for="Input.Password" class="text-danger"></span>
+            </div>
+            <div class="form-floating">
+                <input asp-for="Input.ConfirmPassword" class="form-control" autocomplete="new-password" aria-required="true" />
+                <label asp-for="Input.ConfirmPassword"></label>
+                <span asp-validation-for="Input.ConfirmPassword" class="text-danger"></span>
+            </div>
+            @if(User.IsInRole(Ecommerce_Utilidades.WC.AdminRole))
+            {
+                <button id="registerSubmit" type="submit" class="w-100 btn btn-lg btn-warning">Nuevo Admin</button>
+            }
+            else
+            {
+                <button id="registerSubmit" type="submit" class="w-100 btn btn-lg btn-primary">Nuevo Usuario</button>
+            }
+            
+        </form>
+    </div>
+    <div class="col-md-6 col-md-offset-2">
+        <section>
+            <h3>Use another service to register.</h3>
+            <hr />
+            @{
+                if ((Model.ExternalLogins?.Count ?? 0) == 0)
+                {
+                    <div>
+                        <p>
+                            There are no external authentication services configured. See this <a href="https://go.microsoft.com/fwlink/?LinkID=532715">article
+                            about setting up this ASP.NET application to support logging in via external services</a>.
+                        </p>
+                    </div>
+                }
+                else
+                {
+                    <form id="external-account" asp-page="./ExternalLogin" asp-route-returnUrl="@Model.ReturnUrl" method="post" class="form-horizontal">
+                        <div>
+                            <p>
+                                @foreach (var provider in Model.ExternalLogins)
+                                {
+                                    <button type="submit" class="btn btn-primary" name="provider" value="@provider.Name" title="Log in using your @provider.DisplayName account">@provider.DisplayName</button>
+                                }
+                            </p>
+                        </div>
+                    </form>
+                }
+            }
+        </section>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
+*@

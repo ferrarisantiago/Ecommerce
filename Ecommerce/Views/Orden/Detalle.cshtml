@@ -1,0 +1,105 @@
+﻿
+@model Ecommerce_Modelos.ViewModels.OrdenVM
+
+@{
+    ViewData["Title"] = "Detalle";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<form method="post">
+    <input hidden asp-for="Orden.Id" />
+    <br />
+    <div class="backgroundWhite container">
+        <div class="card">
+            <div class="card-header bg-dark text-light ml-0 row container">
+                <div class="col-12 d-none d-md-block col-md-6 pb-1">
+                    <i class="fas fa-shopping-cart"></i> &nbsp; Resumen de la Orden # @Model.Orden.Id
+                </div>
+                <div class="col-12 col-md-4 offset-md-2 text-right">
+                    <a asp-action="Index" class="btn btn-outline-info form-control btn-sm">Regresar</a>
+                </div>
+            </div>
+            <div class="card-body pb-0">
+                <div class="container rounded p-2">
+                    <div class="row">
+                        <div class="col-12 col-lg-6 pb-4">
+                            <div class="row">
+                                <h4 class="d-flex justify-content-between align-items-center mb-3">
+                                    <span class="text-info">Detalles de Entrega:</span>
+                                </h4>
+                            </div>
+                            <div class="row my-1">
+                                <div class="col-3">Nombre</div>
+                                <div class="col-9">
+                                    <input asp-for="Orden.NombreCompleto" type="text" class="form-control" />
+                                    <span asp-validation-for="Orden.NombreCompleto" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="row my-1">
+                                <div class="col-3">Telefono</div>
+                                <div class="col-9">
+                                    <input asp-for="Orden.Telefono" type="text" class="form-control" />
+                                    <span asp-validation-for="Orden.Telefono" class="text-danger"></span>
+                                </div>
+                            </div>
+
+                            <div class="row my-1">
+                                <div class="col-3">Email</div>
+                                <div class="col-9">
+                                    <input asp-for="Orden.Email" type="text" class="form-control" />
+                                    <span asp-validation-for="Orden.Email" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="row my-1">
+                                <div class="col-3">Fecha de Orden</div>
+                                <div class="col-9">
+                                    <input value="@Model.Orden.FechaOrden.ToShortDateString()" type="text" class="form-control" readonly />
+                                </div>
+                            </div>
+
+                            <div class="row my-1 pt-2">
+                                <div class="col-9 offset-3">
+                                    <div class="row">
+                                        <div class="col">
+                                            <input type="submit" value="Convertir a Carro" class="btn btn-info form-control" />
+                                        </div>
+
+                                        <div class="col">
+                                            <input type="submit" value="Eliminar" class="btn btn-danger form-control" 
+                                               formaction="/Orden/Eliminar" formmethod="post" />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-12 col-lg-5 offset-lg-1">
+                            <h4 class="d-flex justify-content-between align-items-center mb-3">
+                                <span class="text-info">Datos de la Orden</span>
+                            </h4>
+                            <ul class="list-group mb-3">
+                                @foreach (var prod in Model.OrdenDetalle)
+                                {
+                                    <li class="list-group-item d-flex justify-content-between p-2">
+                                        <div class="row container">
+                                            <div class="col-8">
+
+                                                <h6 class="my-0 text-info">@prod.Producto.NombreProducto</h6>
+                                                <small class="text-muted">Precio : $@prod.Producto.Precio</small><br />
+                                            </div>
+                                            <div class="col-4">
+                                            </div>
+                                        </div>
+                                    </li>
+                                }
+
+                            </ul>
+                            <br />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+

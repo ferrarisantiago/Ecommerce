@@ -1,0 +1,206 @@
+﻿@model Ecommerce_Modelos.ViewModels.UserProductosVM
+@using Ecommerce_Utilidades
+
+<form method="post" id="payment-form">
+    <br />
+    <div class="backgroundWhiteBorder">
+        <div class="container">
+            <div class="card">
+                <div class="card-header bg-dark text-light ml-0 row container">
+                    <div class="col-6">
+                        <i class="fa fa-shopping-cart"></i> &nbsp;
+                        Resumen de la Orden
+                    </div>
+                    <div class="col-6 text-end">
+                        <a asp-action="Index" class="btn btn-outline-info btn-sm">Regresar al Carro</a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="container rounded p-2">
+                        <div class="row">
+                            <div class="col-12 col-lg-7 pb-4">
+                                <div class="row">
+                                    <h4 class="d-flex justify-content-between align-items-center mb-3">
+                                        <span class="text-info">Detalle del Usuario:</span>
+                                    </h4>
+                                </div>
+                                <div class="row my-1">
+                                    <div class="col-3">
+                                        <label>Nombres</label>
+                                    </div>
+                                    <div class="col-9">
+                                        <input asp-for="UsuarioAplicacion.NombreCompleto" type="text" class="form-control" id="nombre" />
+                                        <span asp-validation-for="UsuarioAplicacion.NombreCompleto" class="text-danger"></span>
+                                    </div>
+                                </div>
+                                <div class="row my-1">
+                                    <div class="col-3">
+                                        <label>Telefono</label>
+                                    </div>
+                                    <div class="col-9">
+                                        <input asp-for="UsuarioAplicacion.PhoneNumber" type="text" class="form-control" id="tel"/>
+                                        <span asp-validation-for="UsuarioAplicacion.PhoneNumber" class="text-danger"></span>
+                                    </div>
+                                </div>
+                                <div class="row my-1">
+                                    <div class="col-3">
+                                        <label>Email</label>
+                                    </div>
+                                    <div class="col-9">
+                                        <input asp-for="UsuarioAplicacion.Email" type="text" class="form-control" id="email"/>
+                                        <span asp-validation-for="UsuarioAplicacion.Email" class="text-danger"></span>
+                                    </div>
+                                </div>
+                                <div class="row my-1">
+                                    <div class="col-3">
+                                        <label>Direccion</label>
+                                    </div>
+                                    <div class="col-9">
+                                        <input asp-for="UsuarioAplicacion.Direccion" type="text" class="form-control" id="dir"/>
+                                        <span asp-validation-for="UsuarioAplicacion.Direccion" class="text-danger"></span>
+                                    </div>
+                                </div>
+                                <div class="row my-1">
+                                    <div class="col-3">
+                                        <label>Ciudad</label>
+                                    </div>
+                                    <div class="col-9">
+                                        <input asp-for="UsuarioAplicacion.Ciudad" type="text" class="form-control" id="ciudad"/>
+                                        <span asp-validation-for="UsuarioAplicacion.Ciudad" class="text-danger"></span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-12 col-lg-5 row">
+                                <div class="col-12">
+                                    <h4 class="d-flex justify-content-between align-items-center mb-3">
+                                        <span class="text-info">Resumen:</span>
+                                    </h4>
+                                    <ul class="list-group mb-3">
+                                        @{
+                                            var totalOrden = 0.0;
+                                        }
+                                        @for (int i=0; i<Model.ProductoLista.Count(); i++)
+                                        {
+                                            <li class="list-group-item d-flex justify-content-between">
+                                                <input type="hidden" asp-for="@Model.ProductoLista[i].Id">
+                                                <input type="hidden" asp-for="@Model.ProductoLista[i].NombreProducto">
+                                                <input type="hidden" asp-for="@Model.ProductoLista[i].Precio">
+                                                <input type="hidden" asp-for="@Model.ProductoLista[i].TempCantidad">
+                                                <div>
+                                                    <h6 class="my-0">@Model.ProductoLista[i].NombreProducto</h6>
+                                                    @if (User.IsInRole(WC.AdminRole))
+                                                    {
+                                                        <small class="text-muted">Precio: @Model.ProductoLista[i].TempCantidad</small>
+                                                    }
+                                                    else{
+                                                        <small class="text-muted">Precio: @Model.ProductoLista[i].Precio</small>
+                                                    }
+                                                    
+                                                </div>
+                                                @if (User.IsInRole(WC.AdminRole))
+                                                {
+                                                    <span class="text-muted">$@(Model.ProductoLista[i].Precio * Model.ProductoLista[i].TempCantidad):</span>
+                                                }
+                                            </li>
+
+                                            totalOrden = totalOrden + Model.ProductoLista[i].Precio * Model.ProductoLista[i].TempCantidad;
+                                        }
+                                        @if (User.IsInRole(WC.AdminRole)){
+                                            <li class="list-group-item d-flex justify-content-between bg-white">
+                                                <small class="text-info">Total</small>
+                                                <strong class="text-info">$@totalOrden</strong>
+                                            </li>
+                                        }
+
+                                    </ul>
+                                </div>
+                            </div>
+
+                            @if (User.IsInRole(WC.AdminRole))
+                            {
+                                <div class="col-12">
+                                    <div class="wrapper">
+                                        <div class="checkout container">
+                                            <div id="dropin-container"></div>
+                                            <input type="hidden" id="nonce" name="payment_method_nonce" />
+                                        </div>
+                                    </div>
+                                </div>
+
+                            }
+
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <div class="row">
+                        <div class="col-12 col-md-5 offset-md-7">
+                            
+                            @if (User.IsInRole(WC.AdminRole))
+                            {
+                                <button type="submit" onclick="return validarCampos('admin')" class="btn btn-primary form-control">Venta</button>
+                            }
+                            else{
+                                <button type="submit" onclick="return validarCampos('noadmin')" class="btn btn-primary form-control">Enviar Orden</button>
+                            }
+                            
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+
+@section Scripts{
+    <partial name="_ValidationScriptsPartial" />
+
+    <script src="https://js.braintreegateway.com/web/dropin/1.33.7/js/dropin.min.js"></script>
+
+    <script>
+        function validarCampos(rol){
+            if(document.getElementById("nombre").value =="")||
+               document.getElementById("tel").value == "")  ||
+               document.getElementById("email").value == "")||
+               document.getElementById("dir").value =="")   ||
+               document.getElementById("ciudad").value ==""){
+                   swal("Error","Los datos del usuario son obligatorios","error");
+                   return false;
+               }
+               if(rol=="noadmin"){
+                   form.submit();
+               }
+               return true;
+        }
+    </script>
+
+    <script>
+        const form = document.getElementById('payment-form');
+        const client_token = "@ViewBag.ClientToken";
+
+        braintree.dropin.create({
+            authorization: client_token,
+            container: '#dropin-container'
+        }, (error, dropinInstance) => {
+            if (error) console.error(error);
+
+            form.addEventListener('submit', event => {
+                event.preventDefault();
+
+                dropinInstance.requestPaymentMethod((error, payload) => {
+                    if (error) console.error(error);
+
+                    // Step four: when the user is ready to complete their
+                    //   transaction, use the dropinInstance to get a payment
+                    //   method nonce for the user's selected payment method, then add
+                    //   it a the hidden field before submitting the complete form to
+                    //   a server-side integration
+                    document.getElementById('nonce').value = payload.nonce;
+                    form.submit();
+                });
+            });
+        });
+    </script>
+}
+

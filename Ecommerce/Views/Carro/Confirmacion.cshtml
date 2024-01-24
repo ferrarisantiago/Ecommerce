@@ -1,0 +1,18 @@
+﻿@model Ecommerce_Modelos.Venta
+
+
+<div class="text-center">
+
+    @if (Model != null)
+    {
+        <h1 class="text-info">Venta creada</h1>
+        <p>Venta @Model.Id creada satisfactoriamente</p>
+    }
+    else
+    {
+        <h1 class="text-info">Confirmacion</h1>
+        <p>Hemos recibido tu pedido, nos comunicaremos pronto con usted</p>
+    }
+    <img src="/imagenes//carrito-de-la-compra-online.jpg" width="70%" />
+    
+</div>

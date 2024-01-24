@@ -1,0 +1,80 @@
+﻿
+@page
+@model LoginModel
+
+<div class="container py-5 h-100">
+    <div class="row d-flex justify-content-center align-items-center h-100">
+      <div class="col-12 col-md-8 col-lg-6 col-xl-5">
+        <div class="card bg-dark text-white p-4" style="border-radius: 1rem;">
+          <div class="text-center">
+              <h2 class="fw-bold mb-2 text-uppercase">Login</h2>
+              <p class="text-white-50 mb-3">Please enter your login and password!</p>
+              @{
+                  if ((Model.ExternalLogins?.Count ?? 0) == 0)
+        {
+            <div>
+                <p>
+                    No Hay otros servicios de Autenticación
+                </p>
+            </div>
+        }
+                  else
+        {
+            <form id="external-account" asp-page="./ExternalLogin" asp-route-returnUrl="@Model.ReturnUrl" method="post" class="form-horizontal">
+                <div>
+                    
+                        @foreach (var provider in Model.ExternalLogins)
+                        {
+                            @if (provider.Name.ToLower().Contains("facebook"))
+                            {
+                                 <button class="text-white btn btn-link" type="submit" name="provider"
+                                    value="@provider.Name"
+                                    title="Conectarse mediante su cuenta de @provider.DisplayName">
+                                    <i class="fab fa-facebook-f fa-lg"></i>
+                                </button>
+                            }
+                            else
+                            {
+                                <button type="submit" class="btn btn-primary" name="provider" value="@provider.Name" title="Log in using your @provider.DisplayName account">@provider.DisplayName</button>
+                            }
+
+                        }
+                    
+                </div>
+            </form>
+        }
+               }
+          </div>
+          <form id="account" method="post">
+                    @if (Model.ExternalLogins?.Count > 0)
+                    {
+                        <p style="text-align:center;">O por correo electronico</p>
+                    }
+                    <div class="form-outline form-white mb-4">
+                        <label class="form-label" for="typeEmailX">Email</label>
+                        <input asp-for="Input.Email" type="email" id="typeEmailX" class="form-control form-control-lg" />
+                        
+                    </div>
+
+                    <div class="form-outline form-white mb-4">
+                        <label class="form-label" for="typePasswordX">Password</label>
+                        <input asp-for="Input.Password" type="password" id="typePasswordX" class="form-control form-control-lg" />
+                        
+                    </div>
+                    <div class="d-flex col-12 justify-content-center text-center flex-column">
+                        <button class="btn btn-outline-light btn-lg px-5 m-auto col-6" type="submit">Login</button>
+
+                        <a id="forgot-password" asp-page="./ForgotPassword" class="text-info">Olvidó su password?</a>
+
+                        <a asp-page="./Register" asp-route-returnUrl="@Model.ReturnUrl"
+                           class="btn btn-info text-white col-8 m-auto">Registrarse como nuevo Usuario</a>
+                    </div>
+                </form>
+        </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

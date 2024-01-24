@@ -1,0 +1,141 @@
+﻿@model List<Producto>
+@using Ecommerce_Utilidades
+
+    @if (Model.Count()>0)
+    {
+    <form method="post">
+        <br />
+        <div class="backgroundWhiteBorder">
+            <div class="container row">
+                <div class="col -8">
+                    <div class="card mt-4">
+                        <div class="card-header bg-dark text-light ml-0 row container">
+                            <div class="col-6">
+                                <i class="fa fa-shopping-cart"></i> &nbsp;
+                                Carro de Compras
+                            </div>
+                            <div class="col-6 text-end">
+                                <a asp-action="Limpiar" asp-controller="Carro" class="btn btn-outline-warning btn-sm">Vaciar carrito</a>
+                                <a asp-action="Index" asp-controller="Home" class="btn btn-outline-info btn-sm">Continuar Comprando</a>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class=" d-none d-lg-block">
+                                <div class="row" style="color:#821f3d">
+                                    <div class="col-lg-2">
+                                    </div>
+                                    @if (User.IsInRole(WC.AdminRole))
+                                    {
+                                        <div class="col-12 col-lg-3">
+                                            Detalle de producto
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <div class="col-12 col-lg-7">
+                                            Detalle de producto
+                                        </div>
+                                    }
+                                    
+                                    <div class="col-12 col-lg-2">
+                                        Precio
+                                    </div>
+                                    <div class="col-6 col-sm-4 col-lg-1">
+                                    </div>
+                                    @if (User.IsInRole(WC.AdminRole))
+                                    {
+                                        <div class="col-12 col-lg-2">
+                                            Precio
+                                        </div>
+                                        <div class="col-12 col-lg-2">
+                                            Precio total
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+
+                            <hr />
+                            @{
+                                var totalCarro = 0.0;
+                            }
+                            @for (int i = 0; i<Model.Count(); i++)
+                            {
+                                <input hidden asp-for="@Model[i].Id">
+                                <div class="row h-100">
+                                    <div class="col-4 col-md-2 text-center py-2">
+                                        <img src="@WC.ImagenRuta@Model[i].ImagenUrl" class="rounded" width="100%" />
+                                    </div>
+                                    @if (User.IsInRole(WC.AdminRole))
+                                    {
+                                        <div class="col-8 col-lg-3">
+                                            <h5>@Model[i].NombreProducto</h5>
+                                            <div style="font-size:11px;">@Model[i].DescripcionCorta</div>
+                                        </div>
+                                    }
+                                    else{
+                                        <div class="col-8 col-lg-7">
+                                            <h5>@Model[i].NombreProducto</h5>
+                                            <div style="font-size:11px;">@Model[i].DescripcionCorta</div>
+                                        </div>
+                                    }
+                                    
+                                    <div class="col-3 col-lg-2 pt-lg-4" style="font-size:11px;">
+                                        <span style="font-size:17px;"> $@Model[i].Precio</span>
+                                    </div>
+
+                                    @if (User.IsInRole(WC.AdminRole))
+                                    {
+                                        <div class="col-4 col-lg-2 pt-lg-4" style="font-size:11px;">
+                                            <input type="text" asp-for="@Model[i].TempCantidad" class="form-control" />
+                                        </div>
+                                        <div class="col-3 col-lg-2 pt-lg-4" style="font-size:11px;">
+                                            <span style="font-size:17px;"> $@(Model[i].Precio * Model[i].TempCantidad)</span>
+                                        </div>
+                                    }
+
+                                    <div class="col-2 col-lg-1 p-0 pt-lg-4 text-center">
+                                        <a asp-action="Remover" asp-route-Id="@Model[i].Id" class="btn btn-outline-danger">
+                                            <i class="fas fa-trash"></i>
+                                        </a>
+                                    </div>
+                                </div>
+                                totalCarro = totalCarro + Model[i].Precio * Model[i].TempCantidad;
+                            }
+                            @if(User.IsInRole(WC.AdminRole))
+                            {
+                                <div class="col-12 text-end pr-4" style="color:#821f3d">
+                                    Total Carro: @string.Format("{0:c}", totalCarro)
+                                </div>
+                            }
+
+                            <hr />
+                        </div>
+                        <div class="card-footer">
+                            <div class="row">
+                                <div class="col-6 col-md-3 offset-md-6">
+                                    @if (User.IsInRole(WC.AdminRole))
+                                    {
+                                        <button type="submit" asp-action="ActualizarCarro" class="btn btn-success form-control" formmethod="post">
+                                            <span>Actualizar</span>
+                                        </button>
+                                    }
+                                </div>
+                                <div class="col-6 col-md-3">
+                                    <button type="submit" class="btn btn-success form-control ">
+                                        <span>Continuar</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+    }
+    else
+    {
+        <p>Agregue productos al carro</p>
+    }
+
+
