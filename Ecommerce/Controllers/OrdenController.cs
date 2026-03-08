@@ -48,7 +48,8 @@ namespace Ecommerce.Controllers
             {
                 CarroCompras carroCompras = new CarroCompras()
                 {
-                    ProductoId = detalle.ProductoId
+                    ProductoId = detalle.ProductoId,
+                    Cantidad = detalle.Cantidad > 0 ? detalle.Cantidad : 1
                 };
                 carroCompraLista.Add(carroCompras);
             }

@@ -1,0 +1,127 @@
+@model IEnumerable<Ecommerce_Modelos.Producto>
+@using Microsoft.AspNetCore.Mvc.Rendering
+
+@{
+    var categories = ViewBag.Categories as IEnumerable<SelectListItem> ?? Enumerable.Empty<SelectListItem>();
+    bool includeDeleted = ViewBag.IncludeDeleted is bool b && b;
+    string search = ViewBag.Search as string ?? string.Empty;
+    int? selectedCategory = ViewBag.CategoryId as int?;
+}
+
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <h2 class="m-0">Administrar Productos</h2>
+    <a asp-area="Admin" asp-controller="Products" asp-action="Upsert" class="btn btn-primary">Nuevo producto</a>
+</div>
+
+<form method="get" class="card p-3 mb-3">
+    <div class="row g-2">
+        <div class="col-12 col-md-4">
+            <input type="text" name="search" value="@search" class="form-control" placeholder="Buscar por nombre..." />
+        </div>
+        <div class="col-12 col-md-3">
+            <select name="categoryId" class="form-select">
+                <option value="">Todas las categorias</option>
+                @foreach (var item in categories)
+                {
+                    if (selectedCategory.HasValue && selectedCategory.Value.ToString() == item.Value)
+                    {
+                        <option value="@item.Value" selected>@item.Text</option>
+                    }
+                    else
+                    {
+                        <option value="@item.Value">@item.Text</option>
+                    }
+                }
+            </select>
+        </div>
+        <div class="col-12 col-md-3 d-flex align-items-center">
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="includeDeleted" name="includeDeleted" value="true" @(includeDeleted ? "checked" : "") />
+                <label class="form-check-label" for="includeDeleted">Mostrar desactivados</label>
+            </div>
+        </div>
+        <div class="col-12 col-md-2 d-grid">
+            <button type="submit" class="btn btn-outline-primary">Filtrar</button>
+        </div>
+    </div>
+</form>
+
+@if (!Model.Any())
+{
+    <div class="empty-state">
+        <h4>Sin productos para mostrar</h4>
+        <p class="text-muted mb-0">Ajusta los filtros o crea un nuevo producto.</p>
+    </div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead>
+                <tr>
+                    <th>Producto</th>
+                    <th>Categoria</th>
+                    <th>Precio</th>
+                    <th>Stock</th>
+                    <th>Minimo</th>
+                    <th>Estado</th>
+                    <th class="text-end">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr class="@(item.IsDeleted ? "table-secondary" : "")">
+                        <td>
+                            <div class="fw-semibold">@item.NombreProducto</div>
+                            <small class="text-muted">@item.DescripcionCorta</small>
+                        </td>
+                        <td>@item.Categoria?.NombreCategoria</td>
+                        <td>@item.Precio.ToString("c")</td>
+                        <td>
+                            <form asp-area="Admin" asp-controller="Products" asp-action="UpdateStock" method="post" class="d-flex gap-2">
+                                <input type="hidden" name="id" value="@item.Id" />
+                                <input type="number" name="stock" min="0" value="@item.Stock" class="form-control form-control-sm" style="max-width:100px;" />
+                                <button type="submit" class="btn btn-sm btn-outline-secondary">Guardar</button>
+                            </form>
+                        </td>
+                        <td>@item.MinimumStockLevel</td>
+                        <td>
+                            @if (item.IsDeleted)
+                            {
+                                <span class="badge bg-secondary">Desactivado</span>
+                            }
+                            else if (!item.IsActive)
+                            {
+                                <span class="badge bg-dark">Inactivo</span>
+                            }
+                            else if (item.Stock <= 0)
+                            {
+                                <span class="badge bg-danger">Sin stock</span>
+                            }
+                            else if (item.Stock <= item.MinimumStockLevel)
+                            {
+                                <span class="badge bg-warning text-dark">Stock bajo</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-success">Activo</span>
+                            }
+                        </td>
+                        <td class="text-end">
+                            <div class="d-flex flex-wrap justify-content-end gap-2">
+                                <a asp-area="Admin" asp-controller="Products" asp-action="Upsert" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary">Editar</a>
+                                <form asp-area="Admin" asp-controller="Products" asp-action="ToggleDelete" method="post">
+                                    <input type="hidden" name="id" value="@item.Id" />
+                                    <button type="submit" class="btn btn-sm @(item.IsDeleted ? "btn-success" : "btn-warning")">
+                                        @(item.IsDeleted ? "Restaurar" : "Desactivar")
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

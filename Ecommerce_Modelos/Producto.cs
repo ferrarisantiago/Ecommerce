@@ -27,6 +27,19 @@ namespace Ecommerce_Modelos
         [Range(1,double.MaxValue,ErrorMessage ="El precio debe ser mayor a cero")]
         public double Precio { get; set; }
 
+        [Range(0, int.MaxValue, ErrorMessage = "El stock no puede ser negativo")]
+        public int Stock { get; set; }
+
+        [Range(0, int.MaxValue, ErrorMessage = "El stock minimo no puede ser negativo")]
+        public int MinimumStockLevel { get; set; } = 0;
+
+        public bool IsActive { get; set; } = true;
+
+        public bool IsDeleted { get; set; }
+
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+        public DateTime? UpdatedAt { get; set; }
 
         public string? ImagenUrl { get; set; }
 

@@ -12,14 +12,24 @@ namespace Ecommerce_Modelos
     {
         [Key]
         public int Id { get; set; }
+
         [Required]
         public int OrdenId { get; set; }
+
         [ForeignKey("OrdenId")]
         [Required]
         public Orden Orden { get; set; }
+
         public int ProductoId { get; set; }
+
         [ForeignKey("ProductoId")]
         public Producto Producto { get; set; }
+
+        [Range(1, 1000)]
+        public int Cantidad { get; set; }
+
+        [Range(0, double.MaxValue)]
+        public double UnitPrice { get; set; }
 
     }
 }

@@ -1,0 +1,11 @@
+@model Ecommerce_Modelos.Orden
+
+<div class="card p-4 text-center">
+    <h1 class="h3 text-success">Pedido confirmado</h1>
+    <p class="mb-2">Tu pedido <strong>#@Model.Id</strong> fue registrado correctamente.</p>
+    <p class="text-muted mb-4">Estado: @Model.Estado | Fecha: @Model.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</p>
+    <div class="d-flex justify-content-center gap-2">
+        <a asp-controller="MyOrders" asp-action="Detail" asp-route-id="@Model.Id" class="btn btn-primary">Ver detalle</a>
+        <a asp-controller="Home" asp-action="Index" class="btn btn-outline-secondary">Seguir comprando</a>
+    </div>
+</div>

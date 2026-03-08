@@ -50,9 +50,33 @@ namespace Ecommerce_Datos.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
 
+                    b.Property<string>("CiudadEnvio")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("CodigoPostalEnvio")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETUTCDATE()");
+
+                    b.Property<string>("DireccionEnvio")
+                        .IsRequired()
+                        .HasMaxLength(250)
+                        .HasColumnType("nvarchar(250)");
+
                     b.Property<string>("Email")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Estado")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("nvarchar(40)");
 
                     b.Property<DateTime>("FechaOrden")
                         .HasColumnType("datetime2");
@@ -61,9 +85,20 @@ namespace Ecommerce_Datos.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("PaisEnvio")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("ProvinciaEnvio")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
                     b.Property<string>("Telefono")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<double>("Total")
+                        .HasColumnType("float");
 
                     b.Property<string>("usuarioId")
                         .IsRequired()
@@ -73,7 +108,7 @@ namespace Ecommerce_Datos.Migrations
 
                     b.HasIndex("usuarioId");
 
-                    b.ToTable("Orden");
+                    b.ToTable("Orden", (string)null);
                 });
 
             modelBuilder.Entity("Ecommerce_Modelos.OrdenDetalle", b =>
@@ -84,11 +119,17 @@ namespace Ecommerce_Datos.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
 
+                    b.Property<int>("Cantidad")
+                        .HasColumnType("int");
+
                     b.Property<int>("OrdenId")
                         .HasColumnType("int");
 
                     b.Property<int>("ProductoId")
                         .HasColumnType("int");
+
+                    b.Property<double>("UnitPrice")
+                        .HasColumnType("float");
 
                     b.HasKey("Id");
 
@@ -96,7 +137,7 @@ namespace Ecommerce_Datos.Migrations
 
                     b.HasIndex("ProductoId");
 
-                    b.ToTable("OrdenDetalle");
+                    b.ToTable("OrdenDetalle", (string)null);
                 });
 
             modelBuilder.Entity("Ecommerce_Modelos.Producto", b =>
@@ -110,6 +151,11 @@ namespace Ecommerce_Datos.Migrations
                     b.Property<int>("CategoriaId")
                         .HasColumnType("int");
 
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETUTCDATE()");
+
                     b.Property<string>("DescripcionCorta")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -121,6 +167,19 @@ namespace Ecommerce_Datos.Migrations
                     b.Property<string>("ImagenUrl")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(true);
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("MinimumStockLevel")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(0);
+
                     b.Property<string>("NombreProducto")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -128,14 +187,22 @@ namespace Ecommerce_Datos.Migrations
                     b.Property<double>("Precio")
                         .HasColumnType("float");
 
+                    b.Property<int>("Stock")
+                        .HasColumnType("int");
+
                     b.Property<int>("TipoAplicacionId")
                         .HasColumnType("int");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
 
                     b.HasKey("Id");
 
                     b.HasIndex("CategoriaId");
 
                     b.HasIndex("TipoAplicacionId");
+
+                    b.HasIndex("IsDeleted", "IsActive", "CreatedAt");
 
                     b.ToTable("Productos");
                 });
@@ -238,7 +305,7 @@ namespace Ecommerce_Datos.Migrations
 
                     b.HasIndex("VentaId");
 
-                    b.ToTable("ventaDetalles");
+                    b.ToTable("ventaDetalles", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>

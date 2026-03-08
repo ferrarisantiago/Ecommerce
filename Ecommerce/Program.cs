@@ -1,33 +1,46 @@
 using Ecommerce_Datos.Datos;
+using Ecommerce_Datos.Datos.Repositorio;
+using Ecommerce_Datos.Datos.Repositorio.IRepositorio;
+using Ecommerce.Application;
+using Ecommerce_Utilidades;
+using Ecommerce_Utilidades.BrainTree;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.Identity;
-using Ecommerce_Utilidades;
-using Ecommerce_Datos.Datos.Repositorio.IRepositorio;
-using Ecommerce_Datos.Datos.Repositorio;
-using Ecommerce_Utilidades.BrainTree;
+using Serilog;
 
+Console.WriteLine("[Startup] Process started.");
 var builder = WebApplication.CreateBuilder(args);
+Console.WriteLine("[Startup] Builder created.");
 
-// Add services to the container.
-builder.Services.AddDbContext<ApplicationDbContext>(Option =>
-                 Option.UseSqlServer(
-                     builder.Configuration.GetConnectionString("DefaulConnection")));
+builder.Host.UseSerilog((context, loggerConfiguration) =>
+{
+    loggerConfiguration
+        .ReadFrom.Configuration(context.Configuration)
+        .Enrich.FromLogContext();
+});
 
-builder.Services.AddIdentity<IdentityUser, IdentityRole>()
-                .AddDefaultTokenProviders().AddDefaultUI()
-                .AddEntityFrameworkStores<ApplicationDbContext>();
+Console.WriteLine("[Startup] Registering services...");
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaulConnection")));
+
+builder.Services
+    .AddIdentity<IdentityUser, IdentityRole>()
+    .AddDefaultTokenProviders()
+    .AddDefaultUI()
+    .AddEntityFrameworkStores<ApplicationDbContext>();
 
 builder.Services.AddTransient<IEmailSender, EmailSender>();
-
+builder.Services.AddApplication();
 builder.Services.AddControllersWithViews();
+builder.Services.AddRazorPages();
 
 builder.Services.AddHttpContextAccessor();
-builder.Services.AddSession(Options =>
+builder.Services.AddSession(options =>
 {
-    Options.IdleTimeout = TimeSpan.FromMinutes(10);
-    Options.Cookie.HttpOnly = true;
-    Options.Cookie.IsEssential = true;
+    options.IdleTimeout = TimeSpan.FromMinutes(10);
+    options.Cookie.HttpOnly = true;
+    options.Cookie.IsEssential = true;
 });
 
 builder.Services.AddScoped<ICategoriaRepositorio, CategoriaRepositorio>();
@@ -41,23 +54,53 @@ builder.Services.AddScoped<IVentaDetalleRepositorio, VentaDetalleRepositorio>();
 
 builder.Services.Configure<BrainTreeSettings>(builder.Configuration.GetSection("BrainTree"));
 builder.Services.AddSingleton<IBrainTreeGate, BrainTreeGate>();
-builder.Services.AddAuthentication().AddFacebook(option =>
+
+var facebookSection = builder.Configuration.GetSection("Authentication:Facebook");
+string? facebookAppId = facebookSection["AppId"];
+string? facebookAppSecret = facebookSection["AppSecret"];
+if (!string.IsNullOrWhiteSpace(facebookAppId) && !string.IsNullOrWhiteSpace(facebookAppSecret))
 {
-    option.AppId = "1032673464795391";
-    option.AppSecret = "2896ce801cfcd267030f654b9b489d1c";
-});
+    builder.Services.AddAuthentication().AddFacebook(options =>
+    {
+        options.AppId = facebookAppId;
+        options.AppSecret = facebookAppSecret;
+    });
+}
+Console.WriteLine("[Startup] Service registration completed.");
 
 var app = builder.Build();
+app.Logger.LogInformation("App built successfully.");
+Console.WriteLine("[Startup] App built.");
 
-// Configure the HTTP request pipeline.
+if (app.Environment.IsDevelopment() &&
+    string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("ASPNETCORE_URLS")) &&
+    string.IsNullOrWhiteSpace(app.Configuration["urls"]) &&
+    app.Urls.Count == 0)
+{
+    const string defaultHttpUrl = "http://localhost:5005";
+    app.Urls.Add(defaultHttpUrl);
+    app.Logger.LogInformation("ASPNETCORE_URLS is not set. Defaulting Development URL to {Url}.", defaultHttpUrl);
+}
+
+app.UseExceptionHandler("/Home/Error");
+app.UseStatusCodePagesWithReExecute("/Home/Error", "?statusCode={0}");
+
 if (!app.Environment.IsDevelopment())
 {
-    app.UseExceptionHandler("/Home/Error");
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
 
-app.UseHttpsRedirection();
+bool useHttpsRedirection = !app.Environment.IsDevelopment() ||
+                           app.Configuration.GetValue<bool>("UseHttpsRedirectionInDevelopment");
+if (useHttpsRedirection)
+{
+    app.UseHttpsRedirection();
+    app.Logger.LogInformation("HTTPS redirection enabled.");
+}
+else
+{
+    app.Logger.LogInformation("HTTPS redirection disabled for Development. HTTP is the default.");
+}
 app.UseStaticFiles();
 
 app.UseRouting();
@@ -67,10 +110,39 @@ app.UseAuthorization();
 
 app.UseSession();
 
+app.Logger.LogInformation("Starting development seed initialization.");
+try
+{
+    using CancellationTokenSource seedTimeoutCts = new(TimeSpan.FromSeconds(30));
+    await Ecommerce.SeedData.InitializeAsync(app.Services, app.Environment, seedTimeoutCts.Token);
+    app.Logger.LogInformation("Seed initialization finished.");
+}
+catch (OperationCanceledException)
+{
+    app.Logger.LogError("Seed initialization timed out after 30 seconds. Continuing startup.");
+}
+catch (Exception ex)
+{
+    app.Logger.LogError(ex, "Seed initialization failed. Continuing startup.");
+}
+
 app.MapRazorPages();
+
+app.MapControllerRoute(
+    name: "areas",
+    pattern: "{area:exists}/{controller=Dashboard}/{action=Index}/{id?}");
 
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
 
+app.Lifetime.ApplicationStarted.Register(() =>
+{
+    string urls = app.Urls.Count > 0 ? string.Join(", ", app.Urls) : "no urls reported";
+    app.Logger.LogInformation("Application started. Listening on: {Urls}", urls);
+    Console.WriteLine($"[Startup] Application started. Listening on: {urls}");
+});
+
+app.Logger.LogInformation("Entering app.Run().");
+Console.WriteLine("[Startup] Entering app.Run().");
 app.Run();

@@ -1,0 +1,50 @@
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: ecommerce-sqlserver
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: "YourStrong!Passw0rd"
+    ports:
+      - "14333:1433"
+    volumes:
+      - sqlserver-data:/var/opt/mssql
+
+  api:
+    build:
+      context: .
+      dockerfile: Ecommerce.Api/Dockerfile
+    container_name: ecommerce-api
+    depends_on:
+      - sqlserver
+    restart: on-failure
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__DefaulConnection: Server=sqlserver,1433;Database=Ecommerce;User Id=sa;Password=YourStrong!Passw0rd;TrustServerCertificate=True;Encrypt=False;MultipleActiveResultSets=True
+      Jwt__Issuer: Ecommerce.Api
+      Jwt__Audience: Ecommerce.Client
+      Jwt__Key: super-secret-dev-key-change-before-production-123456
+      Jwt__ExpirationMinutes: 120
+    ports:
+      - "8080:8080"
+
+  mvc:
+    build:
+      context: .
+      dockerfile: Ecommerce/Dockerfile
+    container_name: ecommerce-mvc
+    depends_on:
+      - sqlserver
+    restart: on-failure
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__DefaulConnection: Server=sqlserver,1433;Database=Ecommerce;User Id=sa;Password=YourStrong!Passw0rd;TrustServerCertificate=True;Encrypt=False;MultipleActiveResultSets=True
+      SeedAdmin__Email: admin@ecommerce.local
+      SeedAdmin__Password: Admin123!
+    ports:
+      - "8081:8080"
+
+volumes:
+  sqlserver-data:

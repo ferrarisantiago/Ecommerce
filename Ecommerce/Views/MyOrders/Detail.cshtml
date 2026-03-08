@@ -1,0 +1,51 @@
+@model Ecommerce_Modelos.ViewModels.OrderHistoryVM
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h3 m-0">Pedido #@Model.Orden.Id</h1>
+    <a asp-action="Index" class="btn btn-outline-secondary">Volver</a>
+</div>
+
+<div class="row g-3">
+    <div class="col-12 col-lg-4">
+        <div class="card p-3">
+            <h2 class="h5">Informacion</h2>
+            <p class="mb-1"><strong>Estado:</strong> @Model.Orden.Estado</p>
+            <p class="mb-1"><strong>Fecha:</strong> @Model.Orden.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</p>
+            <p class="mb-1"><strong>Total:</strong> @Model.Orden.Total.ToString("c")</p>
+            <hr />
+            <p class="mb-1"><strong>Cliente:</strong> @Model.Orden.NombreCompleto</p>
+            <p class="mb-1"><strong>Email:</strong> @Model.Orden.Email</p>
+            <p class="mb-1"><strong>Telefono:</strong> @Model.Orden.Telefono</p>
+            <p class="mb-0"><strong>Direccion:</strong> @Model.Orden.DireccionEnvio, @Model.Orden.CiudadEnvio @Model.Orden.CodigoPostalEnvio</p>
+        </div>
+    </div>
+
+    <div class="col-12 col-lg-8">
+        <div class="card p-3">
+            <h2 class="h5">Items</h2>
+            <div class="table-responsive">
+                <table class="table align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Producto</th>
+                            <th class="text-center">Precio</th>
+                            <th class="text-center">Cantidad</th>
+                            <th class="text-end">Subtotal</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model.Items)
+                        {
+                            <tr>
+                                <td>@item.Producto?.NombreProducto</td>
+                                <td class="text-center">@item.UnitPrice.ToString("c")</td>
+                                <td class="text-center">@item.Cantidad</td>
+                                <td class="text-end">@((item.UnitPrice * item.Cantidad).ToString("c"))</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

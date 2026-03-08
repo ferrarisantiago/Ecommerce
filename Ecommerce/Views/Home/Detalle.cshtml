@@ -1,78 +1,106 @@
-﻿@model Ecommerce_Modelos.ViewModels.DetalleVM
+@model Ecommerce_Modelos.ViewModels.DetalleVM
 @using Ecommerce_Utilidades
 
-<div class="">
-    <form method="post">
-        <input asp-for="@Model.Producto.Id" hidden />
-        <div class="container backgroundWhite pt-4">
-            <div class="card" style="border:1px solid #000000; ">
-                <div class="card-header bg-dark text-light ml-0 row container" style="border-radius: 0px;">
-                    <div class="col-12 col-md-6">
-                        <h1 class="text-white">@Model.Producto.NombreProducto</h1>
-                    </div>
-                    <div class="col-12 col-md-6 text-md-end">
-                        <h1 class="text-warning"> @((Model.Producto.Precio).ToString("c"))</h1>
-                    </div>
+<section class="card p-3 p-md-4 mb-4">
+    <form method="post" asp-action="Detalle">
+        <input asp-for="Producto.Id" type="hidden" />
+
+        <div class="row g-4">
+            <div class="col-12 col-lg-6">
+                <div class="product-detail-image-wrap mb-2">
+                    @if (!string.IsNullOrWhiteSpace(Model.Producto.ImagenUrl))
+                    {
+                        <img src="@WC.ImagenRuta@Model.Producto.ImagenUrl" alt="@Model.Producto.NombreProducto" class="product-detail-image" />
+                    }
+                    else
+                    {
+                        <div class="product-detail-image placeholder">Sin imagen</div>
+                    }
                 </div>
-                <div class="card-body">
-                    <div class="container rounded p-2">
-                        <div class="row">
-                            <div class="col-12 col-lg-4 p-1 text-center">
-                                <img src="@WC.ImagenRuta@Model.Producto.ImagenUrl" width="100%" class="rounded" />
-                            </div>
-                            <div class="col-12 col-lg-8">
-                                <div class="row pl-3">
 
-                                    <div class="col-12">
-                                        <span class="badge p-3 border text-dark" style="background-color:lavenderblush">@Model.Producto.Categoria.NombreCategoria</span>
-                                        <span class="badge p-3 border text-dark" style="background-color:azure">@Model.Producto.TipoAplicacion.Nombre</span>
-                                        <h3 class="text-success"></h3>
-
-                                        <p class="text-secondary">@Html.Raw(Model.Producto.DescripcionLarga)</p>
-                                    </div>
-
-                                    @if (User.IsInRole(WC.AdminRole))
-                                    {
-                                        <div class="col-12">
-                                            Cantidad:
-                                        </div>
-                                        <div class="col-12">
-                                            @if (Model.ExisteEnCarro)
-                                            {
-                                                <input asp-for="@Model.Producto.TempCantidad" disabled class="form-control">
-                                            }
-                                            else{
-                                                <input asp-for="@Model.Producto.TempCantidad" class="form-control">
-                                            }
-                                            <span asp-validation-for="@Model.Producto.TempCantidad" class="text-danger"></span>
-                                        </div>
-                                    }
-
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                <div class="product-thumbs">
+                    <button type="button" class="thumb active">
+                        @if (!string.IsNullOrWhiteSpace(Model.Producto.ImagenUrl))
+                        {
+                            <img src="@WC.ImagenRuta@Model.Producto.ImagenUrl" alt="Miniatura de @Model.Producto.NombreProducto" />
+                        }
+                        else
+                        {
+                            <span>Sin imagen</span>
+                        }
+                    </button>
                 </div>
-                <div class="card-footer bg-dark">
-                    <div class="row">
-                        <div class="col-12 col-md-6 pb-1 ">
-                            <a asp-action="Index" class="btn btn-success btn-square form-control btn-lg" style="height:50px;">Regresar</a>
-                        </div>
-                        <div class="col-12 col-md-6 ">
-                            @if (Model.ExisteEnCarro)
-                            {
-                                <a asp-action="RemoverDeCarro" asp-route-Id="@Model.Producto.Id" class="btn btn-warning btn-square form-control btn-lg" style="height:50px;">Remover del Carro</a>
-                            }
-                            else
-                            {
-                                <button type="submit" asp-route-Id="@Model.Producto.Id" class="btn btn-info form-control btn-lg" style="height:50px;">Agregar al Carrito</button>
-                            }
+            </div>
 
+            <div class="col-12 col-lg-6">
+                <div class="d-flex flex-wrap gap-2 mb-2">
+                    <span class="badge text-bg-light border">@Model.Producto.Categoria?.NombreCategoria</span>
+                    <span class="badge text-bg-light border">@Model.Producto.TipoAplicacion?.Nombre</span>
+                </div>
+                <h1 class="h3 mb-2">@Model.Producto.NombreProducto</h1>
+                <p class="h4 text-primary mb-3">@Model.Producto.Precio.ToString("c")</p>
+                <p class="text-muted">@Html.Raw(Model.Producto.DescripcionLarga)</p>
 
-                        </div>
+                <div class="mb-3">
+                    @if (Model.Producto.Stock > 0)
+                    {
+                        <span class="stock in">In stock (@Model.Producto.Stock)</span>
+                    }
+                    else
+                    {
+                        <span class="stock out">Out of stock</span>
+                    }
+                </div>
+
+                @if (Model.Producto.Stock > 0)
+                {
+                    <div class="mb-3">
+                        <label asp-for="Producto.TempCantidad" class="form-label">Cantidad</label>
+                        <input asp-for="Producto.TempCantidad" min="1" max="@Model.Producto.Stock" class="form-control" style="max-width:140px;" />
+                        <span asp-validation-for="Producto.TempCantidad" class="text-danger"></span>
                     </div>
+                }
+
+                <div class="d-flex flex-wrap gap-2">
+                    <a asp-action="Index" class="btn btn-outline-secondary">Volver al catalogo</a>
+                    @if (Model.Producto.Stock <= 0)
+                    {
+                        <button type="button" class="btn btn-secondary" disabled>Sin stock</button>
+                    }
+                    else if (Model.ExisteEnCarro)
+                    {
+                        <a asp-action="RemoverDeCarro" asp-route-id="@Model.Producto.Id" class="btn btn-warning">Quitar del carrito</a>
+                    }
+                    else
+                    {
+                        <button type="submit" asp-route-id="@Model.Producto.Id" class="btn btn-primary">Agregar al carrito</button>
+                    }
                 </div>
             </div>
         </div>
     </form>
-</div>
+</section>
+
+<section class="mt-4">
+    <h2 class="h4 mb-3">Productos relacionados</h2>
+    @if (!Model.RelatedProducts.Any())
+    {
+        <div class="empty-state">
+            <h5 class="mb-2">Sin relacionados</h5>
+            <p class="text-muted mb-0">No hay productos de la misma categoria por el momento.</p>
+        </div>
+    }
+    else
+    {
+        <div class="product-grid related">
+            @foreach (var product in Model.RelatedProducts)
+            {
+                <partial name="_ProductCard" model="product" />
+            }
+        </div>
+    }
+</section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

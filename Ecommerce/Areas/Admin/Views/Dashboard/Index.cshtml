@@ -1,0 +1,85 @@
+@model Ecommerce_Modelos.ViewModels.AdminDashboardVM
+
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <h1 class="h3 m-0">Dashboard Admin</h1>
+    <div class="d-flex gap-2">
+        <a asp-area="Admin" asp-controller="Products" asp-action="Index" class="btn btn-outline-primary btn-sm">Gestionar productos</a>
+        <a asp-area="Admin" asp-controller="Dashboard" asp-action="SalesReport" class="btn btn-outline-secondary btn-sm">Reporte de ventas</a>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="card p-3">
+            <div class="text-muted small">Productos activos</div>
+            <div class="h3 m-0">@Model.ActiveProducts</div>
+        </div>
+    </div>
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="card p-3">
+            <div class="text-muted small">Productos inactivos</div>
+            <div class="h3 m-0">@Model.InactiveProducts</div>
+        </div>
+    </div>
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="card p-3">
+            <div class="text-muted small">Alertas de stock bajo</div>
+            <div class="h3 m-0">@Model.LowStockCount</div>
+        </div>
+    </div>
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="card p-3">
+            <div class="text-muted small">Ingresos acumulados</div>
+            <div class="h3 m-0">@Model.TotalRevenue.ToString("c")</div>
+        </div>
+    </div>
+</div>
+
+<div class="card p-3 p-md-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="h5 m-0">Productos con stock bajo</h2>
+        <a asp-area="Admin" asp-controller="Dashboard" asp-action="StockAlerts" class="btn btn-sm btn-outline-danger">
+            Ver todas las alertas
+        </a>
+    </div>
+
+    @if (!Model.LowStockItems.Any())
+    {
+        <div class="empty-state">
+            <h5 class="mb-2">Sin alertas</h5>
+            <p class="text-muted mb-0">No hay productos por debajo del nivel minimo.</p>
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table align-middle">
+                <thead>
+                    <tr>
+                        <th>Producto</th>
+                        <th>Categoria</th>
+                        <th>Stock</th>
+                        <th>Minimo</th>
+                        <th class="text-end">Accion</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model.LowStockItems)
+                    {
+                        <tr>
+                            <td>@item.ProductName</td>
+                            <td>@item.CategoryName</td>
+                            <td><span class="badge bg-danger">@item.CurrentStock</span></td>
+                            <td>@item.MinimumStockLevel</td>
+                            <td class="text-end">
+                                <a asp-area="Admin" asp-controller="Products" asp-action="Upsert" asp-route-id="@item.ProductId" class="btn btn-sm btn-outline-primary">
+                                    Editar
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>

@@ -1,49 +1,166 @@
-﻿@model Ecommerce_Modelos.ViewModels.HomeVM
+@model Ecommerce_Modelos.ViewModels.HomeVM
 
-<div class="container">
-    <div class="text-center">
-        <button class="btn btn-dark filter-button" data-filter="all">Todos</button>
-        @foreach (var cat in Model.Categorias)
-        {
-            <button class="btn btn-outline-secondary filter-button" data-filter="@cat.NombreCategoria.Replace(' ','_')">
-            @cat.NombreCategoria
-            </button>
-        }
+@{
+    string search = Model.Search ?? string.Empty;
+}
 
+<section class="hero mb-4">
+    <div>
+        <h1 class="hero-title">Catalogo de Productos</h1>
+        <p class="hero-subtitle">Explora, filtra y compra con una experiencia responsive lista para produccion.</p>
     </div>
-    <br/>
+</section>
 
-    <div class="row">
-        @foreach (var prod in Model.Productos)
-        {
-            //desplegar los productos ---- PARTIAL VIEW
-            <partial name="_ProductCard" model="prod" />
-        }
-    </div>
-</div>
-
-@section scripts{
-
-    <script>
-            $(document).ready(function(){
-
-            $(".filter-button").click(function(){
-
-                var value = $(this).attr('data-filter');
-                if(value == "all")
+<section class="card p-3 p-md-4 mb-4">
+    <form method="get" class="row g-2">
+        <div class="col-12 col-lg-3">
+            <input type="text" name="search" value="@search" class="form-control" placeholder="Buscar por nombre o descripcion..." />
+        </div>
+        <div class="col-12 col-sm-6 col-lg-2">
+            <select name="categoriaId" class="form-select">
+                <option value="">Todas las categorias</option>
+                @foreach (var categoria in Model.Categorias)
                 {
-                    $('.filter').show('1000');
+                    if (Model.CategoriaId == categoria.Id)
+                    {
+                        <option value="@categoria.Id" selected>@categoria.NombreCategoria</option>
+                    }
+                    else
+                    {
+                        <option value="@categoria.Id">@categoria.NombreCategoria</option>
+                    }
+                }
+            </select>
+        </div>
+        <div class="col-6 col-sm-3 col-lg-2">
+            <input type="number" step="0.01" min="0" name="minPrice" value="@(Model.MinPrice?.ToString() ?? string.Empty)" class="form-control" placeholder="Precio min" />
+        </div>
+        <div class="col-6 col-sm-3 col-lg-2">
+            <input type="number" step="0.01" min="0" name="maxPrice" value="@(Model.MaxPrice?.ToString() ?? string.Empty)" class="form-control" placeholder="Precio max" />
+        </div>
+        <div class="col-6 col-sm-4 col-lg-2">
+            <select name="sort" class="form-select">
+                @if (Model.Sort == "newest")
+                {
+                    <option value="newest" selected>Mas nuevos</option>
                 }
                 else
                 {
-                    $(".filter").not('.'+value).hide('3000');
-                    console.log(value);
-                    $('.filter').filter('.'+value).show('3000');
-
+                    <option value="newest">Mas nuevos</option>
                 }
-            });
 
-        });
-    </script>
+                @if (Model.Sort == "price_asc")
+                {
+                    <option value="price_asc" selected>Precio: menor a mayor</option>
+                }
+                else
+                {
+                    <option value="price_asc">Precio: menor a mayor</option>
+                }
 
+                @if (Model.Sort == "price_desc")
+                {
+                    <option value="price_desc" selected>Precio: mayor a menor</option>
+                }
+                else
+                {
+                    <option value="price_desc">Precio: mayor a menor</option>
+                }
+            </select>
+        </div>
+        <div class="col-6 col-sm-4 col-lg-1">
+            <select name="pageSize" class="form-select">
+                @if (Model.PageSize == 8)
+                {
+                    <option value="8" selected>8</option>
+                }
+                else
+                {
+                    <option value="8">8</option>
+                }
+
+                @if (Model.PageSize == 12)
+                {
+                    <option value="12" selected>12</option>
+                }
+                else
+                {
+                    <option value="12">12</option>
+                }
+
+                @if (Model.PageSize == 16)
+                {
+                    <option value="16" selected>16</option>
+                }
+                else
+                {
+                    <option value="16">16</option>
+                }
+            </select>
+        </div>
+        <input type="hidden" name="page" value="1" />
+        <div class="col-12 col-sm-4 d-grid">
+            <button type="submit" class="btn btn-primary">Aplicar filtros</button>
+        </div>
+    </form>
+</section>
+
+<section class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="h5 m-0">Resultados: @Model.TotalItems</h2>
+    @if (Model.TotalItems > 0)
+    {
+        <span class="text-muted">Pagina @Model.Page de @Model.TotalPages</span>
+    }
+</section>
+
+@if (!Model.Productos.Any())
+{
+    <div class="empty-state">
+        <h4>No hay productos que coincidan</h4>
+        <p class="text-muted mb-0">Prueba con otros filtros o limpia la busqueda.</p>
+    </div>
+}
+else
+{
+    <div class="product-grid">
+        @foreach (var prod in Model.Productos)
+        {
+            <partial name="_ProductCard" model="prod" />
+        }
+    </div>
+}
+
+@if (Model.TotalPages > 1)
+{
+    <nav class="mt-4" aria-label="Paginacion de catalogo">
+        <ul class="pagination justify-content-center flex-wrap gap-1">
+            <li class="page-item @(Model.HasPreviousPage ? "" : "disabled")">
+                <a class="page-link"
+                   asp-action="Index"
+                   asp-route-search="@Model.Search"
+                   asp-route-categoriaId="@Model.CategoriaId"
+                   asp-route-minPrice="@Model.MinPrice"
+                   asp-route-maxPrice="@Model.MaxPrice"
+                   asp-route-sort="@Model.Sort"
+                   asp-route-pageSize="@Model.PageSize"
+                   asp-route-page="@(Model.Page - 1)">Anterior</a>
+            </li>
+
+            <li class="page-item disabled">
+                <span class="page-link">@Model.Page / @Model.TotalPages</span>
+            </li>
+
+            <li class="page-item @(Model.HasNextPage ? "" : "disabled")">
+                <a class="page-link"
+                   asp-action="Index"
+                   asp-route-search="@Model.Search"
+                   asp-route-categoriaId="@Model.CategoriaId"
+                   asp-route-minPrice="@Model.MinPrice"
+                   asp-route-maxPrice="@Model.MaxPrice"
+                   asp-route-sort="@Model.Sort"
+                   asp-route-pageSize="@Model.PageSize"
+                   asp-route-page="@(Model.Page + 1)">Siguiente</a>
+            </li>
+        </ul>
+    </nav>
 }

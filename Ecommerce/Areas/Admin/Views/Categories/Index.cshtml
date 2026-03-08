@@ -1,0 +1,46 @@
+@model IEnumerable<Ecommerce_Modelos.Categoria>
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="m-0">Administrar Categorias</h2>
+    <a asp-area="Admin" asp-controller="Categories" asp-action="Create" class="btn btn-primary">Nueva categoria</a>
+</div>
+
+@if (!Model.Any())
+{
+    <div class="empty-state">
+        <h4>Sin categorias</h4>
+        <p class="text-muted mb-0">Crea una categoria para empezar a organizar el catalogo.</p>
+    </div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead>
+                <tr>
+                    <th>Nombre</th>
+                    <th>Orden</th>
+                    <th class="text-end">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var category in Model)
+                {
+                    <tr>
+                        <td>@category.NombreCategoria</td>
+                        <td>@category.MostrarOrden</td>
+                        <td class="text-end">
+                            <div class="d-flex justify-content-end gap-2">
+                                <a asp-area="Admin" asp-controller="Categories" asp-action="Edit" asp-route-id="@category.Id" class="btn btn-sm btn-outline-primary">Editar</a>
+                                <form asp-area="Admin" asp-controller="Categories" asp-action="Delete" method="post">
+                                    <input type="hidden" name="id" value="@category.Id" />
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">Eliminar</button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

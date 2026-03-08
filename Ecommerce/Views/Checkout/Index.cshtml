@@ -1,0 +1,88 @@
+@model Ecommerce_Modelos.ViewModels.CheckoutVM
+@using Ecommerce_Utilidades
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h3 m-0">Checkout</h1>
+    <a asp-controller="Carro" asp-action="Index" class="btn btn-outline-secondary">Volver al carrito</a>
+</div>
+
+<form method="post" class="row g-3">
+    <div class="col-12 col-lg-7">
+        <div class="card p-3 p-md-4 h-100">
+            <h2 class="h5 mb-3">Direccion de envio</h2>
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-2"></div>
+
+            <div class="row g-3">
+                <div class="col-12">
+                    <label asp-for="NombreCompleto" class="form-label"></label>
+                    <input asp-for="NombreCompleto" class="form-control" />
+                    <span asp-validation-for="NombreCompleto" class="text-danger"></span>
+                </div>
+                <div class="col-12 col-md-6">
+                    <label asp-for="Email" class="form-label"></label>
+                    <input asp-for="Email" class="form-control" />
+                    <span asp-validation-for="Email" class="text-danger"></span>
+                </div>
+                <div class="col-12 col-md-6">
+                    <label asp-for="Telefono" class="form-label"></label>
+                    <input asp-for="Telefono" class="form-control" />
+                    <span asp-validation-for="Telefono" class="text-danger"></span>
+                </div>
+                <div class="col-12">
+                    <label asp-for="DireccionEnvio" class="form-label"></label>
+                    <input asp-for="DireccionEnvio" class="form-control" />
+                    <span asp-validation-for="DireccionEnvio" class="text-danger"></span>
+                </div>
+                <div class="col-12 col-md-6">
+                    <label asp-for="CiudadEnvio" class="form-label"></label>
+                    <input asp-for="CiudadEnvio" class="form-control" />
+                    <span asp-validation-for="CiudadEnvio" class="text-danger"></span>
+                </div>
+                <div class="col-12 col-md-6">
+                    <label asp-for="ProvinciaEnvio" class="form-label"></label>
+                    <input asp-for="ProvinciaEnvio" class="form-control" />
+                    <span asp-validation-for="ProvinciaEnvio" class="text-danger"></span>
+                </div>
+                <div class="col-12 col-md-6">
+                    <label asp-for="CodigoPostalEnvio" class="form-label"></label>
+                    <input asp-for="CodigoPostalEnvio" class="form-control" />
+                    <span asp-validation-for="CodigoPostalEnvio" class="text-danger"></span>
+                </div>
+                <div class="col-12 col-md-6">
+                    <label asp-for="PaisEnvio" class="form-label"></label>
+                    <input asp-for="PaisEnvio" class="form-control" />
+                    <span asp-validation-for="PaisEnvio" class="text-danger"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12 col-lg-5">
+        <div class="card p-3 p-md-4 h-100">
+            <h2 class="h5 mb-3">Resumen del pedido</h2>
+            <ul class="list-group mb-3">
+                @foreach (var item in Model.Items)
+                {
+                    <li class="list-group-item d-flex justify-content-between align-items-start gap-2">
+                        <div>
+                            <div class="fw-semibold">@item.NombreProducto</div>
+                            <small class="text-muted">@item.Quantity x @item.UnitPrice.ToString("c") (stock: @item.AvailableStock)</small>
+                        </div>
+                        <span>@item.LineTotal.ToString("c")</span>
+                    </li>
+                }
+                <li class="list-group-item d-flex justify-content-between fw-bold">
+                    <span>Total</span>
+                    <span>@Model.Total.ToString("c")</span>
+                </li>
+            </ul>
+
+            <button type="submit" class="btn btn-primary w-100">Realizar pedido</button>
+            <p class="text-muted small mt-2 mb-0">No se integra pago online en esta demo. El pedido se guarda directamente.</p>
+        </div>
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

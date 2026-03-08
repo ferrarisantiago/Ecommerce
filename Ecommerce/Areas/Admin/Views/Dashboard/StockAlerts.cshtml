@@ -1,0 +1,48 @@
+@model IEnumerable<Ecommerce_Modelos.ViewModels.LowStockAlertItemVM>
+
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <h1 class="h3 m-0">Alertas de Stock Bajo</h1>
+    <a asp-area="Admin" asp-controller="Dashboard" asp-action="Index" class="btn btn-outline-secondary btn-sm">Volver al dashboard</a>
+</div>
+
+@if (!Model.Any())
+{
+    <div class="empty-state">
+        <h4>Sin alertas</h4>
+        <p class="text-muted mb-0">Todos los productos activos estan por encima del stock minimo.</p>
+    </div>
+}
+else
+{
+    <div class="card p-3 p-md-4">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead>
+                    <tr>
+                        <th>Producto</th>
+                        <th>Categoria</th>
+                        <th>Stock actual</th>
+                        <th>Stock minimo</th>
+                        <th class="text-end">Accion</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model)
+                    {
+                        <tr>
+                            <td class="fw-semibold">@item.ProductName</td>
+                            <td>@item.CategoryName</td>
+                            <td><span class="badge bg-danger">@item.CurrentStock</span></td>
+                            <td>@item.MinimumStockLevel</td>
+                            <td class="text-end">
+                                <a asp-area="Admin" asp-controller="Products" asp-action="Upsert" asp-route-id="@item.ProductId" class="btn btn-sm btn-outline-primary">
+                                    Reponer/Editar
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}

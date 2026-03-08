@@ -1,0 +1,117 @@
+@model Ecommerce_Modelos.ViewModels.ProductoVM
+@using Ecommerce_Utilidades
+
+@{
+    bool isEdit = Model.Producto.Id > 0;
+    string title = isEdit ? "Editar producto" : "Crear producto";
+}
+
+<div class="card p-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="m-0">@title</h2>
+        <a asp-area="Admin" asp-controller="Products" asp-action="Index" class="btn btn-outline-secondary">Volver</a>
+    </div>
+
+    <form method="post" asp-action="Upsert" enctype="multipart/form-data">
+        @if (isEdit)
+        {
+            <input asp-for="Producto.Id" type="hidden" />
+        }
+
+        <div asp-validation-summary="ModelOnly" class="text-danger mb-2"></div>
+
+        <div class="row g-3">
+            <div class="col-12 col-lg-8">
+                <div class="row g-3">
+                    <div class="col-12">
+                        <label asp-for="Producto.NombreProducto" class="form-label"></label>
+                        <input asp-for="Producto.NombreProducto" class="form-control" />
+                        <span asp-validation-for="Producto.NombreProducto" class="text-danger"></span>
+                    </div>
+                    <div class="col-12">
+                        <label asp-for="Producto.DescripcionCorta" class="form-label"></label>
+                        <input asp-for="Producto.DescripcionCorta" class="form-control" />
+                        <span asp-validation-for="Producto.DescripcionCorta" class="text-danger"></span>
+                    </div>
+                    <div class="col-12">
+                        <label asp-for="Producto.DescripcionLarga" class="form-label"></label>
+                        <textarea asp-for="Producto.DescripcionLarga" class="form-control" rows="5"></textarea>
+                        <span asp-validation-for="Producto.DescripcionLarga" class="text-danger"></span>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <label asp-for="Producto.Precio" class="form-label"></label>
+                        <input asp-for="Producto.Precio" class="form-control" />
+                        <span asp-validation-for="Producto.Precio" class="text-danger"></span>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <label asp-for="Producto.Stock" class="form-label"></label>
+                        <input asp-for="Producto.Stock" class="form-control" />
+                        <span asp-validation-for="Producto.Stock" class="text-danger"></span>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <label asp-for="Producto.MinimumStockLevel" class="form-label">Stock minimo</label>
+                        <input asp-for="Producto.MinimumStockLevel" class="form-control" />
+                        <span asp-validation-for="Producto.MinimumStockLevel" class="text-danger"></span>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <label asp-for="Producto.CategoriaId" class="form-label"></label>
+                        <select asp-for="Producto.CategoriaId" asp-items="Model.ListaCategoria" class="form-select">
+                            <option value="">Seleccione categoria</option>
+                        </select>
+                        <span asp-validation-for="Producto.CategoriaId" class="text-danger"></span>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <label asp-for="Producto.TipoAplicacionId" class="form-label"></label>
+                        <select asp-for="Producto.TipoAplicacionId" asp-items="Model.ListaTipoAplicacion" class="form-select">
+                            <option value="">Seleccione tipo de aplicacion</option>
+                        </select>
+                        <span asp-validation-for="Producto.TipoAplicacionId" class="text-danger"></span>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">Imagen</label>
+                        <input type="file" name="files" class="form-control" accept="image/*" />
+                    </div>
+                    <div class="col-12">
+                        <div class="form-check form-switch">
+                            <input asp-for="Producto.IsActive" class="form-check-input" />
+                            <label asp-for="Producto.IsActive" class="form-check-label">Visible en tienda (activo)</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 col-lg-4">
+                @if (isEdit && !string.IsNullOrWhiteSpace(Model.Producto.ImagenUrl))
+                {
+                    <img src="@WC.ImagenRuta@Model.Producto.ImagenUrl" alt="@Model.Producto.NombreProducto" class="img-fluid rounded border" />
+                }
+                else
+                {
+                    <div class="empty-state">
+                        <h5 class="mb-2">Sin imagen</h5>
+                        <p class="text-muted mb-0">Sube una imagen para mostrar este producto en el catalogo.</p>
+                    </div>
+                }
+
+                @if (isEdit)
+                {
+                    <div class="mt-3 small text-muted">
+                        <div><strong>Creado:</strong> @Model.Producto.CreatedAt.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</div>
+                        @if (Model.Producto.UpdatedAt.HasValue)
+                        {
+                            <div><strong>Actualizado:</strong> @Model.Producto.UpdatedAt.Value.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</div>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+
+        <div class="mt-4 d-flex gap-2">
+            <button type="submit" class="btn btn-primary">@((isEdit) ? "Guardar cambios" : "Crear producto")</button>
+            <a asp-area="Admin" asp-controller="Products" asp-action="Index" class="btn btn-outline-secondary">Cancelar</a>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

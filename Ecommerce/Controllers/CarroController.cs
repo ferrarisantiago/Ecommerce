@@ -1,4 +1,5 @@
 ﻿using Braintree;
+using Ecommerce.Application.Cart;
 using Ecommerce_Datos.Datos;
 using Ecommerce_Datos.Datos.Repositorio.IRepositorio;
 using Ecommerce_Modelos;
@@ -26,6 +27,7 @@ namespace Ecommerce.Controllers
         private readonly IVentaRepositorio _ventaRepo;
         private readonly IVentaDetalleRepositorio _ventaDetalleRepo;
         private readonly IBrainTreeGate _brainTreeGate;
+        private readonly ICartCalculatorService _cartCalculatorService;
 
         [BindProperty]
         public UserProductosVM userProductosVM { get; set; }
@@ -34,7 +36,8 @@ namespace Ecommerce.Controllers
             IEmailSender emailSender, IUsuarioAplicacionRepositorio usuarioRepo, IOrdenRepositorio orderRepo, 
             IOrdenDetalleRepositorio orderDetalleRepo, IProductoRepositorio prodRepo,
             IVentaRepositorio ventaRepo, IVentaDetalleRepositorio ventaDetalleRepo,
-            IBrainTreeGate brainTreeGate
+            IBrainTreeGate brainTreeGate,
+            ICartCalculatorService cartCalculatorService
             )
         {
             _webHostEnvironment = webHostEnvironment;
@@ -46,6 +49,7 @@ namespace Ecommerce.Controllers
             _ventaRepo = ventaRepo;
             _ventaDetalleRepo = ventaDetalleRepo;
             _brainTreeGate = brainTreeGate;
+            _cartCalculatorService = cartCalculatorService;
         }
 
         public IActionResult Index()
@@ -58,15 +62,66 @@ namespace Ecommerce.Controllers
             }
             List<int> prodEnCarro = carroCompraLista.Select(i => i.ProductoId).ToList();
             //IEnumerable<Producto> prodList = _db.Productos.Where(p => prodEnCarro.Contains(p.Id));
-            IEnumerable<Producto> prodList = _prodRepo.ObtenerTodos(p => prodEnCarro.Contains(p.Id));
+            IEnumerable<Producto> prodList = _prodRepo.ObtenerTodos(p => prodEnCarro.Contains(p.Id) && !p.IsDeleted && p.IsActive);
             List<Producto> prodlistFinal = new List<Producto>();
+            List<CarroCompras> normalizedCart = new List<CarroCompras>();
+            bool cartWasUpdated = false;
 
+            List<string> adjustedProducts = new();
             foreach(var objCarro in carroCompraLista)
             {
                 Producto prodTemp = prodList.FirstOrDefault(p => p.Id == objCarro.ProductoId);
-                prodTemp.TempCantidad = objCarro.Cantidad;
+                if (prodTemp == null)
+                {
+                    cartWasUpdated = true;
+                    continue;
+                }
+
+                int qty = objCarro.Cantidad < 1 ? 1 : objCarro.Cantidad;
+                if (qty > prodTemp.Stock)
+                {
+                    qty = prodTemp.Stock;
+                    cartWasUpdated = true;
+                    adjustedProducts.Add(prodTemp.NombreProducto);
+                }
+
+                if (qty <= 0)
+                {
+                    cartWasUpdated = true;
+                    adjustedProducts.Add(prodTemp.NombreProducto);
+                    continue;
+                }
+
+                prodTemp.TempCantidad = qty;
                 prodlistFinal.Add(prodTemp);
+
+                normalizedCart.Add(new CarroCompras
+                {
+                    ProductoId = prodTemp.Id,
+                    Cantidad = qty
+                });
             }
+
+            if (cartWasUpdated)
+            {
+                HttpContext.Session.Set(WC.SessionCarroCompras, normalizedCart);
+                if (adjustedProducts.Count > 0)
+                {
+                    TempData[WC.Error] = "Se ajustaron cantidades por stock disponible: " + string.Join(", ", adjustedProducts.Distinct());
+                }
+            }
+
+            var cartSummary = _cartCalculatorService.CalculateSummary(new CartSummaryRequest
+            {
+                Items = prodlistFinal.Select(x => new CartItemInput
+                {
+                    ProductId = x.Id,
+                    ProductName = x.NombreProducto,
+                    UnitPrice = Convert.ToDecimal(x.Precio),
+                    Quantity = x.TempCantidad
+                }).ToList()
+            });
+            ViewBag.CartSummary = cartSummary;
             return View(prodlistFinal);
         }
 
@@ -76,20 +131,48 @@ namespace Ecommerce.Controllers
         public IActionResult IndexPost(IEnumerable<Producto> ProdLista)
         {
             List<CarroCompras> carroComprasLista = new List<CarroCompras>();
+            List<string> stockErrors = new();
             foreach (Producto prod in ProdLista)
             {
+                Producto existing = _prodRepo.ObtenerPrimero(p => p.Id == prod.Id && !p.IsDeleted && p.IsActive);
+                if (existing == null || existing.Stock <= 0)
+                {
+                    stockErrors.Add($"'{prod.NombreProducto}' ya no esta disponible.");
+                    continue;
+                }
+
+                int cantidad = prod.TempCantidad < 1 ? 1 : prod.TempCantidad;
+                if (cantidad > existing.Stock)
+                {
+                    stockErrors.Add($"'{existing.NombreProducto}' solo tiene {existing.Stock} unidades disponibles.");
+                    continue;
+                }
+
                 carroComprasLista.Add(new CarroCompras
                 {
                     ProductoId = prod.Id,
-                    Cantidad = prod.TempCantidad
+                    Cantidad = cantidad
                 });
             }
+
+            if (stockErrors.Count > 0)
+            {
+                HttpContext.Session.Set(WC.SessionCarroCompras, carroComprasLista);
+                TempData[WC.Error] = string.Join(" ", stockErrors);
+                return RedirectToAction(nameof(Index));
+            }
+
             HttpContext.Session.Set(WC.SessionCarroCompras, carroComprasLista);
-            return RedirectToAction(nameof(Resumen));
+            return RedirectToAction("Index", "Checkout");
         }
 
         public IActionResult Resumen()
         {
+            if (!User.IsInRole(WC.AdminRole))
+            {
+                return RedirectToAction("Index", "Checkout");
+            }
+
             //Si es administrador, debe cargar los datos del comprador
             //Si es el mismo comprador, se cargara con sus datos
             //si esta asignado a una orden, se mostrara los datos al uauario que esta asignado
@@ -134,7 +217,7 @@ namespace Ecommerce.Controllers
             }
             List<int> prodEnCarro = carroCompraLista.Select(i => i.ProductoId).ToList();
             //IEnumerable<Producto> prodList = _db.Productos.Where(p => prodEnCarro.Contains(p.Id));
-            IEnumerable<Producto> prodList = _prodRepo.ObtenerTodos(p => prodEnCarro.Contains(p.Id));
+            IEnumerable<Producto> prodList = _prodRepo.ObtenerTodos(p => prodEnCarro.Contains(p.Id) && !p.IsDeleted && p.IsActive);
 
             userProductosVM = new UserProductosVM()
             {
@@ -143,7 +226,11 @@ namespace Ecommerce.Controllers
             };
             foreach(var carro in carroCompraLista)
             {
-                Producto prodTemp = _prodRepo.ObtenerPrimero(p => p.Id == carro.ProductoId);
+                Producto prodTemp = _prodRepo.ObtenerPrimero(p => p.Id == carro.ProductoId && !p.IsDeleted && p.IsActive);
+                if (prodTemp == null)
+                {
+                    continue;
+                }
                 prodTemp.TempCantidad = carro.Cantidad;
                 userProductosVM.ProductoLista.Add(prodTemp);
             }
@@ -155,6 +242,11 @@ namespace Ecommerce.Controllers
         [ActionName("Resumen")]
        public async Task<IActionResult> ResumenPost(IFormCollection collection, UserProductosVM userProductosVM)
         {
+            if (!User.IsInRole(WC.AdminRole))
+            {
+                return RedirectToAction("Index", "Checkout");
+            }
+
             var claimsIdentity = (ClaimsIdentity)User.Identity;
             var claim = claimsIdentity.FindFirst(ClaimTypes.NameIdentifier);
 
@@ -257,7 +349,12 @@ namespace Ecommerce.Controllers
                     NombreCompleto = userProductosVM.UsuarioAplicacion.NombreCompleto,
                     Email = userProductosVM.UsuarioAplicacion.Email,
                     Telefono = userProductosVM.UsuarioAplicacion.PhoneNumber,
-                    FechaOrden = DateTime.Now
+                    FechaOrden = DateTime.UtcNow,
+                    CreatedAt = DateTime.UtcNow,
+                    Estado = WC.EstadoPendiente,
+                    DireccionEnvio = userProductosVM.UsuarioAplicacion.Direccion ?? "No especificada",
+                    CiudadEnvio = userProductosVM.UsuarioAplicacion.Ciudad ?? "No especificada",
+                    Total = userProductosVM.ProductoLista.Sum(x => x.TempCantidad * x.Precio)
                 };
 
                 _orderRepo.Agregar(orden);
@@ -268,7 +365,9 @@ namespace Ecommerce.Controllers
                     OrdenDetalle ordenDetalle = new OrdenDetalle()
                     {
                         OrdenId = orden.Id,
-                        ProductoId = prod.Id
+                        ProductoId = prod.Id,
+                        Cantidad = prod.TempCantidad,
+                        UnitPrice = prod.Precio
                     };
                     _orderDetalleRepo.Agregar(ordenDetalle);
                 }
@@ -304,15 +403,36 @@ namespace Ecommerce.Controllers
         public IActionResult ActualizarCarro(IEnumerable<Producto> ProdLista)
         {
             List<CarroCompras> carroComprasLista = new List<CarroCompras>();
+            List<string> stockErrors = new();
             foreach (Producto prod in ProdLista)
             {
+                Producto existing = _prodRepo.ObtenerPrimero(p => p.Id == prod.Id && !p.IsDeleted && p.IsActive);
+                if (existing == null || existing.Stock <= 0)
+                {
+                    stockErrors.Add($"'{prod.NombreProducto}' ya no esta disponible.");
+                    continue;
+                }
+
+                int cantidad = prod.TempCantidad < 1 ? 1 : prod.TempCantidad;
+                if (cantidad > existing.Stock)
+                {
+                    stockErrors.Add($"'{existing.NombreProducto}' solo tiene {existing.Stock} unidades disponibles.");
+                    continue;
+                }
+
                 carroComprasLista.Add(new CarroCompras
                 {
                     ProductoId = prod.Id,
-                    Cantidad = prod.TempCantidad
+                    Cantidad = cantidad
                 });
             }
             HttpContext.Session.Set(WC.SessionCarroCompras,carroComprasLista);
+
+            if (stockErrors.Count > 0)
+            {
+                TempData[WC.Error] = string.Join(" ", stockErrors);
+            }
+
             return RedirectToAction("Index");
         }
 
